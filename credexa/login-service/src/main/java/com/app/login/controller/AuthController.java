@@ -121,6 +121,21 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/user/{username}")
+    @Operation(summary = "Get user info by username", description = "Retrieve user information by username (for internal microservice use)")
+    public ResponseEntity<ApiResponse<User>> getUserByUsername(@org.springframework.web.bind.annotation.PathVariable String username) {
+        try {
+            User user = authService.getUserByUsername(username);
+            // Remove sensitive information
+            user.setPassword(null);
+            return ResponseEntity.ok(ApiResponse.success("User found", user));
+        } catch (Exception e) {
+            log.error("Failed to get user by username: {}", username, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found with username: " + username));
+        }
+    }
+
     @GetMapping("/health")
     @Operation(summary = "Health check", description = "Check if the service is running")
     public ResponseEntity<ApiResponse<String>> health() {

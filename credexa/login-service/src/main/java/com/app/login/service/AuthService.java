@@ -218,6 +218,15 @@ public class AuthService {
     }
 
     /**
+     * Get user by username
+     */
+    public User getUserByUsername(String username) {
+        log.info("Retrieving user information for username: {}", username);
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
+    /**
      * Validate JWT token
      */
     public TokenValidationResponse validateToken(String token) {

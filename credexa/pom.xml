@@ -18,8 +18,8 @@
 	<modules>
 		<module>common-lib</module>
 		<module>login-service</module>
-		<!-- Modules to be added later:
 		<module>customer-service</module>
+		<!-- Modules to be added later:
 		<module>product-pricing-service</module>
 		<module>fd-calculator-service</module>
 		<module>fd-account-service</module>

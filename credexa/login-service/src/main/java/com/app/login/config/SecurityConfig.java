@@ -52,6 +52,7 @@ public class SecurityConfig {
                     "/health",
                     "/bank-config",
                     "/validate-token",
+                    "/user/**",  // For microservice communication (customer-service fetching userId)
                     "/swagger-ui/**",
                     "/api-docs/**",
                     "/v3/api-docs/**",
