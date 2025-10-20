@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * REST controller for customer operations
  */
 @RestController
-@RequestMapping("/customers")
+@RequestMapping  // Empty mapping since context-path is already /api/customer
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Customer Management", description = "APIs for managing customer information")

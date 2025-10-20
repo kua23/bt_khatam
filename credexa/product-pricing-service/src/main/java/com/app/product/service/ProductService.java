@@ -1,16 +1,9 @@
 package com.app.product.service;
 
-import com.app.product.dto.*;
-import com.app.product.entity.Product;
-import com.app.product.enums.ProductStatus;
-import com.app.product.enums.ProductType;
-import com.app.product.exception.DuplicateProductCodeException;
-import com.app.product.exception.InvalidProductException;
-import com.app.product.exception.ProductNotFoundException;
-import com.app.product.mapper.ProductMapper;
-import com.app.product.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -21,9 +14,29 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.app.product.dto.CreateProductRequest;
+import com.app.product.dto.InterestRateMatrixRequest;
+import com.app.product.dto.ProductListResponse;
+import com.app.product.dto.ProductResponse;
+import com.app.product.dto.ProductSearchCriteria;
+import com.app.product.dto.ProductSummaryResponse;
+import com.app.product.dto.UpdateProductRequest;
+import com.app.product.entity.Product;
+import com.app.product.enums.ProductStatus;
+import com.app.product.enums.ProductType;
+import com.app.product.exception.DuplicateProductCodeException;
+import com.app.product.exception.InvalidProductException;
+import com.app.product.exception.ProductNotFoundException;
+import com.app.product.mapper.ProductMapper;
+import com.app.product.repository.InterestRateMatrixRepository;
+import com.app.product.repository.ProductBalanceTypeRepository;
+import com.app.product.repository.ProductChargeRepository;
+import com.app.product.repository.ProductRepository;
+import com.app.product.repository.ProductRoleRepository;
+import com.app.product.repository.ProductTransactionTypeRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service layer for Product operations
@@ -104,7 +117,8 @@ public class ProductService {
      * Get product by ID
      * Cached by product ID
      */
-    @Cacheable(value = "products", key = "#productId")
+    @Transactional(readOnly = true)
+    // @Cacheable(value = "products", key = "#productId")  // Temporarily disabled for debugging
     public ProductResponse getProductById(Long productId) {
         log.info("Fetching product by ID: {}", productId);
 
@@ -118,7 +132,8 @@ public class ProductService {
      * Get product by code
      * Cached by product code
      */
-    @Cacheable(value = "productsByCode", key = "#productCode")
+    @Transactional(readOnly = true)
+    // @Cacheable(value = "productsByCode", key = "#productCode")  // Temporarily disabled for debugging
     public ProductResponse getProductByCode(String productCode) {
         log.info("Fetching product by code: {}", productCode);
 

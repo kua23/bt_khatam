@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
  * Provides comprehensive CRUD and search operations for products
  */
 @RestController
-@RequestMapping("/products")
+@RequestMapping  // Empty mapping since context-path is already /api/products
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Product Management", description = "APIs for managing banking products")
