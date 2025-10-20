@@ -50,7 +50,7 @@ jwt:
 # Service URLs for inter-service communication
 services:
   product-pricing:
-    url: http://localhost:8084/api/products
+    url: http://localhost:8084/api/products/products
   customer:
     url: http://localhost:8083/api/customers
 

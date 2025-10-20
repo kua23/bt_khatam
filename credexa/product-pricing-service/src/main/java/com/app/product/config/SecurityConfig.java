@@ -7,22 +7,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.app.product.security.JwtAuthenticationFilter;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * Security configuration for product-pricing-service
- * Configures JWT authentication and endpoint access rules
+ * Allows all requests without authentication for inter-service communication
  */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -30,23 +22,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Allow Swagger and OpenAPI docs without authentication
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/api-docs/**",
-                    "/swagger-ui.html",
-                    "/swagger-resources/**",
-                    "/webjars/**"
-                ).permitAll()
-                
-                // Allow health check
-                .requestMatchers("/actuator/**").permitAll()
-                
-                // All other requests require authentication
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Allow ALL requests (no authentication required)
+                .anyRequest().permitAll()
+            );
 
         return http.build();
     }
