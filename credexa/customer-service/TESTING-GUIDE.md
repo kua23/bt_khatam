@@ -291,8 +291,8 @@ POST http://localhost:8082/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "admin_user",
-  "email": "admin@credexa.com",
+  "username": "admin1",
+  "email": "admin1@credexa.com",
   "password": "AdminPass123!",
   "mobileNumber": "9876543212"
 }
@@ -315,7 +315,7 @@ SELECT u.id, u.username, r.name as role
 FROM login_db.users u
 JOIN login_db.user_roles ur ON u.id = ur.user_id
 JOIN login_db.roles r ON ur.role_id = r.id
-WHERE u.username = 'admin_user';
+WHERE u.username = 'admin1';
 ```
 
 ---
@@ -326,7 +326,7 @@ POST http://localhost:8082/api/auth/login
 Content-Type: application/json
 
 {
-  "usernameOrEmailOrMobile": "admin_user",
+  "usernameOrEmailOrMobile": "admin1",
   "password": "AdminPass123!"
 }
 ```

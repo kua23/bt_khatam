@@ -19,9 +19,9 @@
 		<module>common-lib</module>
 		<module>login-service</module>
 		<module>customer-service</module>
-		<!-- Modules to be added later:
 		<module>product-pricing-service</module>
 		<module>fd-calculator-service</module>
+		<!-- Modules to be added later:
 		<module>fd-account-service</module>
 		-->
 	</modules>
