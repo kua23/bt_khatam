@@ -1,7 +1,9 @@
 package com.app.fdaccount.repository;
 
-import com.app.fdaccount.entity.FdAccount;
-import com.app.fdaccount.enums.AccountStatus;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,9 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import com.app.fdaccount.entity.FdAccount;
+import com.app.fdaccount.enums.AccountStatus;
 
 /**
  * Repository interface for FdAccount entity
@@ -47,23 +48,33 @@ public interface FdAccountRepository extends JpaRepository<FdAccount, Long> {
     /**
      * Find all accounts by product code
      */
-    List<FdAccount> findByProductCode(String productCode);
+    @Query("SELECT DISTINCT a FROM FdAccount a " +
+           "LEFT JOIN FETCH a.roles " +
+           "WHERE a.productCode = :productCode")
+    List<FdAccount> findByProductCode(@Param("productCode") String productCode);
 
     /**
      * Find all accounts by branch code
      */
-    List<FdAccount> findByBranchCode(String branchCode);
+    @Query("SELECT DISTINCT a FROM FdAccount a " +
+           "LEFT JOIN FETCH a.roles " +
+           "WHERE a.branchCode = :branchCode")
+    List<FdAccount> findByBranchCode(@Param("branchCode") String branchCode);
 
     /**
      * Find accounts by customer ID through roles
      */
-    @Query("SELECT DISTINCT a FROM FdAccount a JOIN a.roles r WHERE r.customerId = :customerId AND r.isActive = true")
+    @Query("SELECT DISTINCT a FROM FdAccount a " +
+           "JOIN FETCH a.roles r " +
+           "WHERE r.customerId = :customerId")
     List<FdAccount> findByCustomerId(@Param("customerId") Long customerId);
 
     /**
      * Find accounts maturing between dates
      */
-    @Query("SELECT a FROM FdAccount a WHERE a.maturityDate BETWEEN :startDate AND :endDate AND a.status = 'ACTIVE'")
+    @Query("SELECT DISTINCT a FROM FdAccount a " +
+           "LEFT JOIN FETCH a.roles " +
+           "WHERE a.maturityDate BETWEEN :startDate AND :endDate AND a.status = 'ACTIVE'")
     List<FdAccount> findAccountsMaturingBetween(@Param("startDate") LocalDate startDate, 
                                                   @Param("endDate") LocalDate endDate);
 

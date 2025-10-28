@@ -1,0 +1,6 @@
+{
+  "principalAmount": 100000,
+  "interestRate": 6.5,
+  "termInMonths": 6,
+  "compoundingFrequency": "QUARTERLY"
+}
