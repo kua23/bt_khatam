@@ -39,13 +39,13 @@ spring:
           filters:
             - StripPrefix=0
 
-        # Login/Auth Service Routes (placeholder - update with actual port when known)
+        # Login/Auth Service Routes
         - id: login-service
-          uri: http://localhost:8087
+          uri: http://localhost:8081
           predicates:
-            - Path=/api/login/**, /api/auth/**
+            - Path=/api/login/**
           filters:
-            - StripPrefix=0
+            - RewritePath=/api/login/(?<segment>.*), /api/auth/$\{segment}
 
       # Global CORS configuration
       globalcors:
