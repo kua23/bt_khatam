@@ -61,7 +61,7 @@ public class User {
     @Column(name = "preferred_currency", length = 10)
     private String preferredCurrency = "USD";
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id"),

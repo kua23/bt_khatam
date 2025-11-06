@@ -29,11 +29,8 @@ public class Role {
     private String description;
 
     public enum RoleName {
-        ROLE_ADMIN,
-        ROLE_USER,
-        ROLE_CUSTOMER_MANAGER,
-        ROLE_PRODUCT_MANAGER,
-        ROLE_FD_MANAGER,
-        ROLE_REPORT_VIEWER
+        ROLE_ADMIN,      // Administrator - full access
+        ROLE_MANAGER,    // Manager - can create/update/delete entities
+        ROLE_CUSTOMER    // Customer - read-only access
     }
 }

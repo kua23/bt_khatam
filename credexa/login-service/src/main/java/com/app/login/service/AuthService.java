@@ -103,10 +103,10 @@ public class AuthService {
                 .roles(new HashSet<>())
                 .build();
 
-        // Assign default role
-        Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
+        // Assign default CUSTOMER role
+        Role customerRole = roleRepository.findByName(Role.RoleName.ROLE_CUSTOMER)
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
-        user.getRoles().add(userRole);
+        user.getRoles().add(customerRole);
 
         User savedUser = userRepository.save(user);
 
@@ -160,11 +160,15 @@ public class AuthService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
-        // Generate JWT token
-        List<String> roles = user.getRoles().stream()
+        // Fetch fresh user data to ensure roles are loaded
+        User refreshedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Generate JWT token with roles
+        List<String> roles = refreshedUser.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toList());
-        String token = jwtUtil.generateToken(user.getUsername(), roles);
+        String token = jwtUtil.generateToken(refreshedUser.getUsername(), roles);
 
         // Create session
         createUserSession(user, token, httpRequest);
