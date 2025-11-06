@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class FdCalculatorController {
     private final FdCalculatorService fdCalculatorService;
     
     @PostMapping("/calculate/standalone")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER', 'CUSTOMER_MANAGER', 'ADMIN')")
     @Operation(
         summary = "Calculate FD with standalone inputs",
         description = "Calculate FD maturity amount and interest with manual inputs (no product required). " +
@@ -72,6 +74,7 @@ public class FdCalculatorController {
     }
     
     @PostMapping("/calculate/product-based")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER', 'CUSTOMER_MANAGER', 'ADMIN')")
     @Operation(
         summary = "Calculate FD using product defaults",
         description = "Calculate FD maturity using product configuration from product-pricing-service. " +
@@ -122,6 +125,7 @@ public class FdCalculatorController {
     }
     
     @PostMapping("/compare")
+    @PreAuthorize("hasAnyRole('BRANCH_MANAGER', 'CUSTOMER_MANAGER', 'ADMIN')")
     @Operation(
         summary = "Compare multiple FD scenarios",
         description = "Compare multiple FD calculation scenarios side-by-side. " +
@@ -156,6 +160,7 @@ public class FdCalculatorController {
     @GetMapping("/health")
     @Operation(
         summary = "Health check",
+        security = {})
         description = "Check if the FD Calculator service is running"
     )
     public ResponseEntity<ApiResponse<String>> healthCheck() {
