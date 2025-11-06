@@ -8,11 +8,14 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.product.dto.ApiResponse;
+import com.app.product.dto.InterestRateMatrixRequest;
 import com.app.product.dto.InterestRateMatrixResponse;
 import com.app.product.service.InterestRateService;
 
@@ -34,6 +37,27 @@ import lombok.extern.slf4j.Slf4j;
 public class InterestRateController {
 
     private final InterestRateService interestRateService;
+
+    @PostMapping
+    @Operation(summary = "Add new interest rate", 
+               description = "Adds a new interest rate slab for a product")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Interest rate added successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Product not found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request parameters")
+    })
+    public ResponseEntity<ApiResponse<InterestRateMatrixResponse>> addInterestRate(
+            @Parameter(description = "Product ID") @PathVariable Long productId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Interest rate details", 
+                required = true
+            ) @RequestBody InterestRateMatrixRequest request) {
+        
+        log.info("REST: Adding interest rate for product ID: {}", productId);
+        InterestRateMatrixResponse response = interestRateService.addInterestRate(productId, request);
+        
+        return ResponseEntity.ok(ApiResponse.success("Interest rate added successfully", response));
+    }
 
     @GetMapping
     @Operation(summary = "Get interest rates for product", 

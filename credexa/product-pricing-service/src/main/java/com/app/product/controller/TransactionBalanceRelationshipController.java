@@ -24,7 +24,9 @@ import com.app.product.service.TransactionBalanceRelationshipService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,11 +39,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Transaction-Balance Relationships", description = "APIs for managing transaction to balance type mappings")
+@SecurityRequirement(name = "Bearer Authentication")
 public class TransactionBalanceRelationshipController {
 
     private final TransactionBalanceRelationshipService relationshipService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Create relationship", description = "Creates a new transaction-balance relationship")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Relationship created successfully")
@@ -56,6 +60,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get all relationships", description = "Retrieves all transaction-balance relationships")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationships retrieved successfully")
@@ -68,6 +73,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get relationship by ID")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationship retrieved successfully"),
@@ -82,6 +88,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping("/transaction/{transactionType}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get by transaction type", description = "Retrieves relationships for a transaction type")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationships retrieved successfully")
@@ -95,6 +102,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping("/balance/{balanceType}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get by balance type", description = "Retrieves relationships for a balance type")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationships retrieved successfully")
@@ -108,6 +116,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping("/lookup")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Lookup specific relationship", description = "Finds relationship by transaction and balance type")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationship found"),
@@ -123,6 +132,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get active relationships", description = "Retrieves all active relationships")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Active relationships retrieved successfully")
@@ -135,6 +145,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Update relationship")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationship updated successfully"),
@@ -150,6 +161,7 @@ public class TransactionBalanceRelationshipController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Delete relationship")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Relationship deleted successfully"),

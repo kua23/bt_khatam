@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import com.app.product.service.ProductChargeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +33,13 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Product Charges", description = "APIs for managing product charges and fees")
+@SecurityRequirement(name = "Bearer Authentication")
 public class ProductChargeController {
 
     private final ProductChargeService chargeService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Add charge to product", description = "Adds a new charge or fee to a product")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Charge added successfully"),
@@ -52,6 +56,7 @@ public class ProductChargeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get all charges for product", description = "Retrieves all charges associated with a product")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Charges retrieved successfully")
@@ -65,6 +70,7 @@ public class ProductChargeController {
     }
 
     @GetMapping("/type/{chargeType}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get charges by type", description = "Retrieves charges of a specific type for a product")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Charges retrieved successfully")
@@ -84,11 +90,13 @@ public class ProductChargeController {
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Charges Management", description = "Direct charge management APIs")
+@SecurityRequirement(name = "Bearer Authentication")
 class ChargeManagementController {
 
     private final ProductChargeService chargeService;
 
     @GetMapping("/{chargeId}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER', 'ADMIN')")
     @Operation(summary = "Get charge by ID", description = "Retrieves a specific charge by its ID")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Charge retrieved successfully"),
@@ -103,6 +111,7 @@ class ChargeManagementController {
     }
 
     @PutMapping("/{chargeId}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Update charge", description = "Updates an existing charge")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Charge updated successfully"),
@@ -118,6 +127,7 @@ class ChargeManagementController {
     }
 
     @DeleteMapping("/{chargeId}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @Operation(summary = "Delete charge", description = "Deletes a charge from a product")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Charge deleted successfully"),

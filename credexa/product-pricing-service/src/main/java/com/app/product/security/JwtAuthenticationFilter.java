@@ -1,10 +1,17 @@
 package com.app.product.security;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,9 +35,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-
-        // TEMPORARILY DISABLED: Skip JWT validation for ALL requests (for inter-service communication)
-        // To re-enable JWT authentication, restore the original implementation below
+        
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                if (jwtUtil.validateToken(jwt)) {
+                    String username = jwtUtil.extractUsername(jwt);
+                    Claims claims = jwtUtil.extractClaims(jwt);
+                    List<String> roles = claims.get("roles", List.class);
+                    
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList());
+                    
+                    UsernamePasswordAuthenticationToken authentication = 
+                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.debug("Authenticated user: {} with roles: {}", username, roles);
+                }
+            }
+        } catch (Exception e) {
+            log.error("JWT Authentication failed: {}", e.getMessage());
+        }
+        
         filterChain.doFilter(request, response);
     }
 }

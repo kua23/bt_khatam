@@ -7,11 +7,16 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.app.product.dto.InterestRateMatrixRequest;
 import com.app.product.dto.InterestRateMatrixResponse;
 import com.app.product.entity.InterestRateMatrix;
+import com.app.product.entity.Product;
+import com.app.product.exception.ResourceNotFoundException;
 import com.app.product.mapper.ProductMapper;
 import com.app.product.repository.InterestRateMatrixRepository;
+import com.app.product.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +30,25 @@ import lombok.extern.slf4j.Slf4j;
 public class InterestRateService {
 
     private final InterestRateMatrixRepository interestRateMatrixRepository;
+    private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+
+    /**
+     * Add a new interest rate slab for a product
+     */
+    @Transactional
+    public InterestRateMatrixResponse addInterestRate(Long productId, InterestRateMatrixRequest request) {
+        log.info("Adding interest rate for product ID: {}", productId);
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + productId));
+
+        InterestRateMatrix rateMatrix = productMapper.toInterestRateEntity(request, product);
+        rateMatrix = interestRateMatrixRepository.save(rateMatrix);
+
+        log.info("Interest rate added successfully with ID: {}", rateMatrix.getId());
+        return productMapper.toInterestRateResponse(rateMatrix);
+    }
 
     /**
      * Get all interest rate slabs for a product
