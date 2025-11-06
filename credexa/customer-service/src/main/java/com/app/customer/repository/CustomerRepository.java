@@ -62,4 +62,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
      * Check if customer exists by Aadhar number
      */
     boolean existsByAadharNumber(String aadharNumber);
+
+    /**
+     * Check if customer exists by ID and user ID
+     */
+    boolean existsByUserIdAndId(Long userId, Long id);
 }

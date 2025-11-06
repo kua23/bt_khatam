@@ -3,6 +3,8 @@ package com.app.customer.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,17 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final LoginServiceClient loginServiceClient;
+
+    /**
+     * Get all customers
+     */
+    @Transactional(readOnly = true)
+    public List<CustomerResponse> getAllCustomers() {
+        log.info("Fetching all customers");
+        return customerRepository.findAll().stream()
+                .map(CustomerResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 
     /**
      * Create a new customer
@@ -123,24 +136,94 @@ public class CustomerService {
     /**
      * Update customer
      */
+    /**
+     * Check if the given customer ID belongs to the authenticated user
+     */
+    public boolean isOwnProfile(Long customerId, String username) {
+        return customerRepository.findById(customerId)
+                .map(customer -> customer.getUsername().equals(username))
+                .orElse(false);
+    }
+
+    /**
+     * Update customer profile
+     */
     @Transactional
-    public CustomerResponse updateCustomer(Long id, UpdateCustomerRequest request, String authenticatedUsername, boolean isAdmin) {
-        log.info("Updating customer with ID: {} by user: {} (Admin: {})", id, authenticatedUsername, isAdmin);
+    public CustomerResponse updateCustomer(Long id, UpdateCustomerRequest request, String authenticatedUsername, boolean isAdminOrManager) {
+        log.info("Updating customer with ID: {} by user: {} (AdminOrManager: {})", id, authenticatedUsername, isAdminOrManager);
 
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + id));
 
-        // Security Check: Regular users can only update their own profile
-        // Admin users can update any profile
-        if (!isAdmin && !customer.getUsername().equals(authenticatedUsername)) {
+        boolean isOwnProfile = customer.getUsername().equals(authenticatedUsername);
+
+        // If not admin/manager and not own profile, throw exception
+        if (!isAdminOrManager && !isOwnProfile) {
             throw new com.app.customer.exception.UnauthorizedAccessException(
-                "You can only update your own customer profile. Admin access required to update other profiles."
+                "You can only update your own customer profile. Admin/Manager access required to update other profiles."
             );
         }
 
-        log.debug("User '{}' (Admin: {}) authorized to update customer for userId: {}", 
-                authenticatedUsername, isAdmin, customer.getUserId());
+        log.debug("User '{}' (AdminOrManager: {}) authorized to update customer for userId: {}", 
+                authenticatedUsername, isAdminOrManager, customer.getUserId());
 
+        // Regular users can only update non-critical fields
+        if (!isAdminOrManager && isOwnProfile) {
+            updateNonCriticalFields(customer, request);
+        } else {
+            // Admin/Manager can update all fields
+            updateAllFields(customer, request);
+        }
+
+        Customer updatedCustomer = customerRepository.save(customer);
+        log.info("Customer updated successfully with ID: {}", updatedCustomer.getId());
+
+        return CustomerResponse.fromEntity(updatedCustomer);
+    }
+
+    /**
+     * Update only non-critical fields (allowed for regular users)
+     */
+    private void updateNonCriticalFields(Customer customer, UpdateCustomerRequest request) {
+        // Address details
+        if (request.getAddressLine1() != null) {
+            customer.setAddressLine1(request.getAddressLine1());
+        }
+        if (request.getAddressLine2() != null) {
+            customer.setAddressLine2(request.getAddressLine2());
+        }
+        if (request.getCity() != null) {
+            customer.setCity(request.getCity());
+        }
+        if (request.getState() != null) {
+            customer.setState(request.getState());
+        }
+        if (request.getPincode() != null) {
+            customer.setPincode(request.getPincode());
+        }
+        if (request.getCountry() != null) {
+            customer.setCountry(request.getCountry());
+        }
+
+        // Preferences
+        if (request.getPreferredLanguage() != null) {
+            customer.setPreferredLanguage(request.getPreferredLanguage());
+        }
+        if (request.getPreferredCurrency() != null) {
+            customer.setPreferredCurrency(request.getPreferredCurrency());
+        }
+        if (request.getEmailNotifications() != null) {
+            customer.setEmailNotifications(request.getEmailNotifications());
+        }
+        if (request.getSmsNotifications() != null) {
+            customer.setSmsNotifications(request.getSmsNotifications());
+        }
+    }
+
+    /**
+     * Update all fields (allowed for admins and managers)
+     */
+    private void updateAllFields(Customer customer, UpdateCustomerRequest request) {
         // Update only non-null fields
         if (request.getFullName() != null) {
             customer.setFullName(request.getFullName());
@@ -149,7 +232,7 @@ public class CustomerService {
             // Check if mobile number already exists for another customer
             customerRepository.findByMobileNumber(request.getMobileNumber())
                     .ifPresent(existing -> {
-                        if (!existing.getId().equals(id)) {
+                        if (!existing.getId().equals(customer.getId())) {
                             throw new DuplicateCustomerException("Mobile number already registered");
                         }
                     });
@@ -159,7 +242,7 @@ public class CustomerService {
             // Check if email already exists for another customer
             customerRepository.findByEmail(request.getEmail())
                     .ifPresent(existing -> {
-                        if (!existing.getId().equals(id)) {
+                        if (!existing.getId().equals(customer.getId())) {
                             throw new DuplicateCustomerException("Email already registered");
                         }
                     });
@@ -191,24 +274,11 @@ public class CustomerService {
         if (request.getKycStatus() != null) {
             customer.setKycStatus(request.getKycStatus());
         }
-        if (request.getAddressLine1() != null) {
-            customer.setAddressLine1(request.getAddressLine1());
-        }
-        if (request.getAddressLine2() != null) {
-            customer.setAddressLine2(request.getAddressLine2());
-        }
-        if (request.getCity() != null) {
-            customer.setCity(request.getCity());
-        }
-        if (request.getState() != null) {
-            customer.setState(request.getState());
-        }
-        if (request.getPincode() != null) {
-            customer.setPincode(request.getPincode());
-        }
-        if (request.getCountry() != null) {
-            customer.setCountry(request.getCountry());
-        }
+
+        // Also update non-critical fields
+        updateNonCriticalFields(customer, request);
+
+        // Financial details (admin/manager only)
         if (request.getIsActive() != null) {
             customer.setIsActive(request.getIsActive());
         }
@@ -218,23 +288,6 @@ public class CustomerService {
         if (request.getIfscCode() != null) {
             customer.setIfscCode(request.getIfscCode());
         }
-        if (request.getPreferredLanguage() != null) {
-            customer.setPreferredLanguage(request.getPreferredLanguage());
-        }
-        if (request.getPreferredCurrency() != null) {
-            customer.setPreferredCurrency(request.getPreferredCurrency());
-        }
-        if (request.getEmailNotifications() != null) {
-            customer.setEmailNotifications(request.getEmailNotifications());
-        }
-        if (request.getSmsNotifications() != null) {
-            customer.setSmsNotifications(request.getSmsNotifications());
-        }
-
-        Customer updatedCustomer = customerRepository.save(customer);
-        log.info("Customer updated successfully with ID: {}", updatedCustomer.getId());
-
-        return CustomerResponse.fromEntity(updatedCustomer);
     }
 
     /**

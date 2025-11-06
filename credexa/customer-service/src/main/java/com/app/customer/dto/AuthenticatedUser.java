@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthenticatedUser {
     private String username;
-    private Long userId;
+    private Long id; // This is the userId
     private boolean isAdmin;
+    private boolean isManager;
 }

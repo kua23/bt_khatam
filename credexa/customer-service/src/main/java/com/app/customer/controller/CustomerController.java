@@ -1,7 +1,10 @@
 package com.app.customer.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,7 @@ import com.app.customer.dto.Customer360Response;
 import com.app.customer.dto.CustomerClassificationResponse;
 import com.app.customer.dto.CustomerResponse;
 import com.app.customer.dto.UpdateCustomerRequest;
+import com.app.customer.service.CustomerAuthorizationService;
 import com.app.customer.service.CustomerService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  * REST controller for customer operations
  */
 @RestController
-@RequestMapping  // Empty mapping since context-path is already /api/customer
+@RequestMapping("/customers")  // Base path for customer endpoints
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Customer Management", description = "APIs for managing customer information")
@@ -38,9 +42,20 @@ import lombok.extern.slf4j.Slf4j;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CustomerAuthorizationService authorizationService;
+
+    @GetMapping
+    @PreAuthorize("hasRole('CUSTOMER_MANAGER') or hasRole('ADMIN')")
+    @Operation(summary = "Get all customers", description = "List all customers. Only Customer Managers and Admins can access this endpoint.")
+    public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
+        log.info("Received request to list all customers");
+        List<CustomerResponse> customers = customerService.getAllCustomers();
+        return ResponseEntity.ok(customers);
+    }
 
     @PostMapping
-    @Operation(summary = "Create new customer", description = "Create a new customer profile. Regular users can only create for themselves, admins can create for any user.")
+    @PreAuthorize("hasRole('CUSTOMER_MANAGER') or hasRole('ADMIN')")
+    @Operation(summary = "Create new customer", description = "Create a new customer profile. Only Customer Managers and Admins can create customers.")
     public ResponseEntity<CustomerResponse> createCustomer(
             @Valid @RequestBody CreateCustomerRequest request,
             Authentication authentication) {
@@ -58,7 +73,8 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get customer by ID", description = "Retrieve customer details by customer ID")
+    @PreAuthorize("hasRole('CUSTOMER_MANAGER') or hasRole('ADMIN')")
+    @Operation(summary = "Get customer by ID", description = "Retrieve customer details by customer ID. Only Customer Managers and Admins can access this endpoint.")
     public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Long id) {
         log.info("Received request to get customer by ID: {}", id);
         CustomerResponse response = customerService.getCustomerById(id);
@@ -66,7 +82,8 @@ public class CustomerController {
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get customer by user ID", description = "Retrieve customer details by user ID from login-service")
+    @PreAuthorize("hasRole('CUSTOMER_MANAGER') or hasRole('ADMIN')")
+    @Operation(summary = "Get customer by user ID", description = "Retrieve customer details by user ID from login-service. Only Customer Managers and Admins can access this endpoint.")
     public ResponseEntity<CustomerResponse> getCustomerByUserId(@PathVariable Long userId) {
         log.info("Received request to get customer by user ID: {}", userId);
         CustomerResponse response = customerService.getCustomerByUserId(userId);
@@ -74,7 +91,8 @@ public class CustomerController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update customer", description = "Update customer information. Regular users can only update their own profile, admins can update any profile.")
+    @PreAuthorize("hasAnyRole('CUSTOMER_MANAGER', 'ADMIN') or @authorizationService.isOwnProfile(#id, authentication)")
+    @Operation(summary = "Update customer", description = "Update customer information. Regular users can only update non-critical fields of their own profile. Customer Managers and Admins can update any customer's profile.")
     public ResponseEntity<CustomerResponse> updateCustomer(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCustomerRequest request,
@@ -84,14 +102,20 @@ public class CustomerController {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_ADMIN"));
+        boolean isManager = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_CUSTOMER_MANAGER"));
         
-        log.info("User '{}' (Admin: {}) updating customer ID: {}", authenticatedUsername, isAdmin, id);
-        CustomerResponse response = customerService.updateCustomer(id, request, authenticatedUsername, isAdmin);
+        log.info("User '{}' (Admin: {}, Manager: {}) updating customer ID: {}", 
+                authenticatedUsername, isAdmin, isManager, id);
+        
+        CustomerResponse response = customerService.updateCustomer(id, request, authenticatedUsername, isAdmin || isManager);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/classification")
-    @Operation(summary = "Get customer classification", description = "Get customer classification for FD rate determination")
+    @PreAuthorize("hasAnyRole('CUSTOMER_MANAGER', 'PRODUCT_MANAGER', 'ADMIN')")
+    @Operation(summary = "Get customer classification", description = "Get customer classification for FD rate determination. Available to managers and admins.")
     public ResponseEntity<CustomerClassificationResponse> getCustomerClassification(@PathVariable Long id) {
         log.info("Received request to get classification for customer ID: {}", id);
         CustomerClassificationResponse response = customerService.getCustomerClassification(id);
@@ -99,7 +123,8 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}/360-view")
-    @Operation(summary = "Get 360-degree customer view", description = "Get comprehensive customer overview including FD accounts")
+    @PreAuthorize("hasRole('CUSTOMER_MANAGER') or hasRole('ADMIN')")
+    @Operation(summary = "Get 360-degree customer view", description = "Get comprehensive customer overview including FD accounts. Only Customer Managers and Admins can access this endpoint.")
     public ResponseEntity<Customer360Response> getCustomer360View(@PathVariable Long id) {
         log.info("Received request to get 360-degree view for customer ID: {}", id);
         Customer360Response response = customerService.getCustomer360View(id);
